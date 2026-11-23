@@ -118,6 +118,10 @@ scripts read it without modifying it and export reconstructed spans to the raw
 streams. Records are marked with `backfill=true`.
 
 - OpenCode: [docs/opencode-backfill.md](docs/opencode-backfill.md)
+- VS Code Copilot Chat: [docs/vscode-chat-backfill.md](docs/vscode-chat-backfill.md)
+
+The default VS Code storage location is the macOS one. Use `--storage`
+elsewhere.
 
 <br>
 
