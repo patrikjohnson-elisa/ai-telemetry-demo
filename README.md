@@ -125,6 +125,19 @@ elsewhere.
 
 <br>
 
+## Presentation
+
+The slides use [reveal.js](https://revealjs.com/) with Markdown content in
+`slides/slides.md`:
+
+```bash
+uv run python -m http.server -d slides 8000
+```
+
+Open <http://localhost:8000>, and press `S` for speaker notes.
+
+<br>
+
 ## Development
 
 ```bash
