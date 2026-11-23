@@ -1,0 +1,82 @@
+raw = .
+
+kind = "other"
+if raw.gen_ai_operation_name == "chat" {
+  kind = "inference"
+} else if raw.gen_ai_operation_name == "execute_tool" {
+  kind = "tool"
+} else if raw.gen_ai_operation_name == "invoke_agent" {
+  kind = "agent"
+} else if raw.gen_ai_operation_name == "embeddings" {
+  kind = "embedding"
+}
+
+success = null
+if raw.span_status == "OK" {
+  success = true
+} else if raw.span_status == "ERROR" {
+  success = false
+}
+
+model = null
+if exists(raw.gen_ai_response_model) {
+  model = raw.gen_ai_response_model
+} else if exists(raw.gen_ai_request_model) {
+  model = raw.gen_ai_request_model
+}
+
+conversation_id = null
+if exists(raw.gen_ai_conversation_id) {
+  conversation_id = raw.gen_ai_conversation_id
+} else if exists(raw.copilot_chat_session_id) {
+  conversation_id = raw.copilot_chat_session_id
+}
+
+reasoning_tokens = null
+if exists(raw.gen_ai_usage_reasoning_tokens) {
+  reasoning_tokens = to_int(raw.gen_ai_usage_reasoning_tokens) ?? null
+} else if exists(raw.gen_ai_usage_reasoning_output_tokens) {
+  reasoning_tokens = to_int(raw.gen_ai_usage_reasoning_output_tokens) ?? null
+}
+
+duration_ms = null
+if exists(raw.duration) {
+  duration_ms = to_float!(raw.duration) / 1000.0
+}
+
+. = {
+  "_timestamp": raw._timestamp,
+  "trace_id": raw.trace_id,
+  "span_id": raw.span_id,
+  "reference_parent_span_id": raw.reference_parent_span_id,
+  "reference_parent_trace_id": raw.reference_parent_trace_id,
+  "reference_ref_type": raw.reference_ref_type,
+  "operation_name": raw.operation_name,
+  "start_time": raw.start_time,
+  "end_time": raw.end_time,
+  "duration": raw.duration,
+  "span_kind": raw.span_kind,
+  "span_status": raw.span_status,
+  "status_code": raw.status_code,
+  "status_message": raw.status_message,
+  "service_name": raw.service_name,
+  "ai_schema_version": 1,
+  "ai_source": "vscode_copilot",
+  "ai_event_kind": kind,
+  "ai_model": model,
+  "ai_provider": raw.gen_ai_provider_name,
+  "ai_conversation_id": conversation_id,
+  "ai_agent": raw.gen_ai_agent_name,
+  "ai_input_tokens": to_int(raw.gen_ai_usage_input_tokens) ?? null,
+  "ai_output_tokens": to_int(raw.gen_ai_usage_output_tokens) ?? null,
+  "ai_reasoning_tokens": reasoning_tokens,
+  "ai_cache_read_tokens": to_int(raw.gen_ai_usage_cache_read_input_tokens) ?? null,
+  "ai_cache_write_tokens": to_int(raw.gen_ai_usage_cache_creation_input_tokens) ?? null,
+  "ai_total_tokens": to_int(raw.gen_ai_usage_total_tokens) ?? null,
+  "ai_cost_usd": to_float(raw.gen_ai_usage_cost) ?? null,
+  "ai_tool_name": raw.gen_ai_tool_name,
+  "ai_duration_ms": duration_ms,
+  "ai_success": success
+}
+
+. = compact(., recursive: true)

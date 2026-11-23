@@ -98,6 +98,17 @@ Both tools can also capture prompt and response content (`capturePromptInLogs`
 and `github.copilot.chat.otel.captureContent`). It stays in the raw streams
 only.
 
+<br>
+
+## Normalization
+
+Real-time OpenObserve pipelines copy each raw span into `ai_normalized` with a
+shared `ai_*` schema. See [docs/ai-normalization.md](docs/ai-normalization.md).
+
+```bash
+uv run --env-file .env scripts/manage_ai_normalization.py deploy
+```
+
 ---
 
 Most of the code and documentation in this repository was written with AI
