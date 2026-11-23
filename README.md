@@ -109,6 +109,24 @@ shared `ai_*` schema. See [docs/ai-normalization.md](docs/ai-normalization.md).
 uv run --env-file .env scripts/manage_ai_normalization.py deploy
 ```
 
+<br>
+
+## Backfilling history
+
+Both tools keep local history that predates live telemetry. The backfill
+scripts read it without modifying it and export reconstructed spans to the raw
+streams. Records are marked with `backfill=true`.
+
+- OpenCode: [docs/opencode-backfill.md](docs/opencode-backfill.md)
+
+<br>
+
+## Development
+
+```bash
+uv run pytest
+```
+
 ---
 
 Most of the code and documentation in this repository was written with AI
