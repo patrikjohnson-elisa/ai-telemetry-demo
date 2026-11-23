@@ -1,0 +1,25 @@
+name: ai-tool-telemetry-demo
+
+services:
+  openobserve:
+    image: openobserve/openobserve:latest
+    restart: unless-stopped
+    ports:
+      - "5080:5080" # Web UI and ingestion API
+    environment:
+      - ZO_LOCAL_MODE=true
+      # Only applied when the data volume is first initialized
+      - ZO_ROOT_USER_EMAIL=${OPENOBSERVE_USER:?Set OPENOBSERVE_USER in .env}
+      - ZO_ROOT_USER_PASSWORD=${OPENOBSERVE_PASSWORD:?Set OPENOBSERVE_PASSWORD in .env}
+      # Accept backfilled records with historical timestamps (hours)
+      - ZO_INGEST_ALLOWED_UPTO=5000
+      # Limits memory churn by writing indexes to disk every 5 minutes
+      - ZO_DATA_FLUSH_INTERVAL=300000
+      - ZO_OTLP_TRACES_STREAM_NAME=default
+    volumes:
+      # Named volume ensures persistent storage that bypasses macOS file locks
+      - openobserve_data:/data
+
+volumes:
+  openobserve_data:
+    driver: local

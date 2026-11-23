@@ -39,6 +39,65 @@ Requires [uv](https://docs.astral.sh/uv/) and Docker.
 uv sync
 ```
 
+<br>
+
+### OpenObserve
+
+```bash
+cp .env.example .env   # then set a real password
+docker compose up -d
+```
+
+The web UI runs at <http://localhost:5080>. The root user is only created when
+the data volume is first initialized, so changing `.env` later does not change
+the credentials.
+
+<br>
+
+### Exporting live telemetry
+
+Both tools send OTLP over HTTP to `http://localhost:5080/api/default`. The
+`stream-name` header picks the raw stream. Create the `Authorization` value
+with `echo -n "$OPENOBSERVE_USER:$OPENOBSERVE_PASSWORD" | base64`, or use an
+ingestion token from the OpenObserve UI.
+
+OpenCode, in `~/.config/opencode/opencode.jsonc`:
+
+```jsonc
+{
+  "plugin": [
+    [
+      "@devtheops/opencode-plugin-otel",
+      {
+        "enabled": true,
+        "endpoint": "http://localhost:5080/api/default",
+        "protocol": "http/protobuf",
+        "otlpHeaders": "Authorization=Basic <base64>,stream-name=opencode_raw"
+      }
+    ]
+  ]
+}
+```
+
+VS Code, in user `settings.json`:
+
+```jsonc
+{
+  "github.copilot.chat.otel.enabled": true,
+  "github.copilot.chat.otel.exporterType": "otlp-http",
+  "github.copilot.chat.otel.protocol": "http/protobuf",
+  "github.copilot.chat.otel.otlpEndpoint": "http://localhost:5080/api/default",
+  "github.copilot.chat.otel.headers": {
+    "Authorization": "Basic <base64>",
+    "stream-name": "vscode_copilot_raw"
+  }
+}
+```
+
+Both tools can also capture prompt and response content (`capturePromptInLogs`
+and `github.copilot.chat.otel.captureContent`). It stays in the raw streams
+only.
+
 ---
 
 Most of the code and documentation in this repository was written with AI
