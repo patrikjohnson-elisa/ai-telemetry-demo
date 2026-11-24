@@ -21,6 +21,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_URL = os.environ.get("OPENOBSERVE_URL", "http://localhost:5080")
 DEFAULT_USER = os.environ.get("OPENOBSERVE_USER", "root@example.com")
 DEFAULT_ORG = "default"
+DASHBOARD_DIR = REPO_ROOT / "openobserve/dashboards"
+DASHBOARD_FOLDER = "default"
+EXPORT_ONLY_DASHBOARD_KEYS = ("dashboardId", "owner", "created", "updatedAt")
 FORBIDDEN_NORMALIZED_PREFIXES = (
     "copilot_chat_", "github_copilot_", "llm_", "session_", "tool_",
     "gen_ai_input_", "gen_ai_output_", "gen_ai_system_", "gen_ai_tool_call_",
@@ -269,6 +272,41 @@ def deploy(client: OpenObserve) -> None:
             print(f'Created pipeline {source["pipeline"]}')
 
 
+def keep_variable_values(dashboard: dict[str, Any], current: dict[str, Any]) -> None:
+    """Keep variable values set on the instance, such as a budget or time zone."""
+    current_values = {
+        variable["name"]: variable.get("value")
+        for variable in current.get("variables", {}).get("list", [])
+    }
+    for variable in dashboard.get("variables", {}).get("list", []):
+        if variable["name"] in current_values:
+            variable["value"] = current_values[variable["name"]]
+
+
+def deploy_dashboards(client: OpenObserve) -> None:
+    listed = client.request("GET", f"/dashboards?folder={DASHBOARD_FOLDER}").get("dashboards", [])
+    existing = {item["title"]: item for item in listed}
+
+    for path in sorted(DASHBOARD_DIR.glob("*.json")):
+        dashboard = json.loads(path.read_text())
+        for key in EXPORT_ONLY_DASHBOARD_KEYS:
+            dashboard.pop(key, None)
+
+        match = existing.get(dashboard["title"])
+        if match:
+            current = client.request("GET", f'/dashboards/{match["dashboard_id"]}')["v8"]
+            keep_variable_values(dashboard, current)
+            dashboard["dashboardId"] = match["dashboard_id"]
+            client.request(
+                "PUT", f'/dashboards/{match["dashboard_id"]}?folder={DASHBOARD_FOLDER}&hash={match["hash"]}',
+                json=dashboard,
+            )
+            print(f'Updated dashboard {dashboard["title"]}')
+        else:
+            client.request("POST", f"/dashboards?folder={DASHBOARD_FOLDER}", json=dashboard)
+            print(f'Created dashboard {dashboard["title"]}')
+
+
 def status(client: OpenObserve) -> dict[str, Any]:
     functions = client.request("GET", "/functions").get("list", [])
     pipelines = client.request("GET", "/pipelines").get("list", [])
@@ -337,7 +375,7 @@ def smoke_test(client: OpenObserve) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("validate", "deploy", "status", "smoke-test"))
+    parser.add_argument("command", choices=("validate", "deploy", "dashboards", "status", "smoke-test"))
     parser.add_argument("--url", default=DEFAULT_URL)
     parser.add_argument("--org", default=DEFAULT_ORG)
     parser.add_argument("--username", default=DEFAULT_USER)
@@ -354,6 +392,8 @@ def main() -> int:
             print(json.dumps(validate_source(client, name, source), indent=2))
         deploy(client)
         print(json.dumps(status(client), indent=2))
+    elif args.command == "dashboards":
+        deploy_dashboards(client)
     elif args.command == "status":
         print(json.dumps(status(client), indent=2))
     else:

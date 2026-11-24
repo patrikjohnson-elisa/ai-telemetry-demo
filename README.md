@@ -111,6 +111,17 @@ uv run --env-file .env scripts/manage_ai_normalization.py deploy
 
 <br>
 
+## Dashboards
+
+Dashboards on `ai_normalized` live in `openobserve/dashboards/`. See
+[docs/dashboards.md](docs/dashboards.md).
+
+```bash
+uv run --env-file .env scripts/manage_ai_normalization.py dashboards
+```
+
+<br>
+
 ## Backfilling history
 
 Both tools keep local history that predates live telemetry. The backfill
