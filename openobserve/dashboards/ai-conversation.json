@@ -1,0 +1,1359 @@
+{
+  "version": 8,
+  "title": "AI conversation",
+  "description": "One conversation from ai_normalized: context growth, credits per call and tool calls. Opened from the AI tools overview, or set the conversation variable.",
+  "role": "",
+  "tabs": [
+    {
+      "tabId": "overview",
+      "name": "Overview",
+      "panels": [
+        {
+          "id": "details",
+          "type": "table",
+          "title": "Conversation",
+          "description": "The conversation in the conversation variable. Project is the repo and branch, known for VS Code only. Times are in the timezone variable.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "default",
+            "decimals": 0,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT t.\"conversation\", p.project AS \"project\", t.\"tool\", t.\"model\", t.\"started\", t.\"ended\", t.\"hours\" FROM (SELECT ai_conversation_id AS \"conversation\", MAX(ai_source) AS \"tool\", FIRST_VALUE(ai_model ORDER BY ai_total_tokens DESC) AS \"model\", to_char(MIN((to_timestamp_micros(_timestamp) AT TIME ZONE 'UTC' AT TIME ZONE '$timezone')), '%d.%m.%Y %H:%M') AS \"started\", to_char(MAX((to_timestamp_micros(_timestamp) AT TIME ZONE 'UTC' AT TIME ZONE '$timezone')), '%d.%m.%Y %H:%M') AS \"ended\", ROUND((MAX(_timestamp) - MIN(_timestamp)) / 3600000000.0, 1) AS \"hours\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation' GROUP BY ai_conversation_id ORDER BY \"conversation\") t LEFT JOIN (SELECT COALESCE(gen_ai_conversation_id, copilot_chat_session_id) AS cid, MAX(replace(regexp_replace(github_copilot_git_repository, '^.*/', ''), '.git', '') || COALESCE(' \u00b7 ' || github_copilot_git_branch, '')) AS project FROM \"vscode_copilot_raw\" WHERE github_copilot_git_repository IS NOT NULL GROUP BY cid) p ON p.cid = t.\"conversation\" ORDER BY t.\"conversation\"",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [
+                  {
+                    "label": "Conversation",
+                    "alias": "conversation",
+                    "column": "conversation",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Project",
+                    "alias": "project",
+                    "column": "project",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "AI tool",
+                    "alias": "tool",
+                    "column": "tool",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Main model",
+                    "alias": "model",
+                    "column": "model",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Started",
+                    "alias": "started",
+                    "column": "started",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Last call",
+                    "alias": "ended",
+                    "column": "ended",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Hours",
+                    "alias": "hours",
+                    "column": "hours",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 192,
+            "h": 9,
+            "i": 1
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "credits",
+          "type": "metric",
+          "title": "Credits",
+          "description": "Estimated GitHub AI credits for this conversation.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "numbers",
+            "decimals": 1,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT ROUND(SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (400 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 20 * COALESCE(ai_cache_read_tokens, 0) + 500 * COALESCE(ai_cache_write_tokens, 0) + 2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (240 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 16 * COALESCE(ai_cache_read_tokens, 0) + 250 * COALESCE(ai_cache_write_tokens, 0) + 960 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 125 * COALESCE(ai_cache_write_tokens, 0) + 500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 125 * COALESCE(ai_cache_write_tokens, 0) + 500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 1000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (12.5 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 1 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 50 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 25 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 20 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 1150 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (25 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 2 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 120 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (75 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 7.5 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 375 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 ELSE NULL END), 0) AS \"y_axis_1\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation'",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [],
+                "y": [
+                  {
+                    "label": "Credits",
+                    "alias": "y_axis_1",
+                    "column": "y_axis_1",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 9,
+            "w": 48,
+            "h": 12,
+            "i": 2
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "calls",
+          "type": "metric",
+          "title": "Model calls",
+          "description": "Model calls in this conversation, excluding VS Code background calls.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "numbers",
+            "decimals": 0,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT COUNT(*) AS \"y_axis_1\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation'",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [],
+                "y": [
+                  {
+                    "label": "Model calls",
+                    "alias": "y_axis_1",
+                    "column": "y_axis_1",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 48,
+            "y": 9,
+            "w": 48,
+            "h": 12,
+            "i": 3
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "avg-context",
+          "type": "metric",
+          "title": "Average context per call",
+          "description": "Average input context per model call: uncached input, cache read and cache write.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "numbers",
+            "decimals": 1,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT ROUND(AVG(((CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + COALESCE(ai_cache_read_tokens, 0) + COALESCE(ai_cache_write_tokens, 0))), 0) AS \"y_axis_1\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation'",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [],
+                "y": [
+                  {
+                    "label": "Average context per call",
+                    "alias": "y_axis_1",
+                    "column": "y_axis_1",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 9,
+            "w": 48,
+            "h": 12,
+            "i": 4
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "cache-write-share",
+          "type": "metric",
+          "title": "Cache write % of credits",
+          "description": "Share of the credits spent on writing context to the cache.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "percent",
+            "decimals": 1,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT ROUND(100.0 * SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (500 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (250 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (125 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (125 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 ELSE NULL END) / NULLIF(SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (400 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 20 * COALESCE(ai_cache_read_tokens, 0) + 500 * COALESCE(ai_cache_write_tokens, 0) + 2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (240 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 16 * COALESCE(ai_cache_read_tokens, 0) + 250 * COALESCE(ai_cache_write_tokens, 0) + 960 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 125 * COALESCE(ai_cache_write_tokens, 0) + 500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 125 * COALESCE(ai_cache_write_tokens, 0) + 500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 1000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (12.5 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 1 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 50 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 25 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 20 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 1150 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (25 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 2 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 120 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (75 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 7.5 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 375 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 ELSE NULL END), 0), 1) AS \"y_axis_1\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation'",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [],
+                "y": [
+                  {
+                    "label": "Cache write % of credits",
+                    "alias": "y_axis_1",
+                    "column": "y_axis_1",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 144,
+            "y": 9,
+            "w": 48,
+            "h": 12,
+            "i": 5
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "context-per-call",
+          "type": "stacked",
+          "title": "Context per call",
+          "description": "Input context of each model call, by token type. Each call reads the conversation so far from the cache and writes only the new part. A tall cache write bar means the whole context was written again, usually because the cache expired during a pause of over 5 minutes.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "numbers",
+            "decimals": 0,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            },
+            "show_symbol": false
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT \"call\" AS \"x_axis_1\", SUM((CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) AS \"y_axis_1\", 'Uncached input' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" UNION ALL SELECT \"call\" AS \"x_axis_1\", SUM(COALESCE(ai_cache_read_tokens, 0)) AS \"y_axis_1\", 'Cache read' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" UNION ALL SELECT \"call\" AS \"x_axis_1\", SUM(COALESCE(ai_cache_write_tokens, 0)) AS \"y_axis_1\", 'Cache write' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" ORDER BY \"x_axis_1\"",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [
+                  {
+                    "label": "Call number",
+                    "alias": "x_axis_1",
+                    "column": "_timestamp",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "y": [
+                  {
+                    "label": "Tokens",
+                    "alias": "y_axis_1",
+                    "column": "y_axis_1",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "z": [],
+                "breakdown": [
+                  {
+                    "label": "Token type",
+                    "alias": "breakdown_1",
+                    "column": "ai_source",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 21,
+            "w": 96,
+            "h": 30,
+            "i": 6
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "credits-per-call",
+          "type": "stacked",
+          "title": "Credits per call",
+          "description": "Estimated credits of each model call, by token type.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "numbers",
+            "decimals": 0,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            },
+            "show_symbol": false
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT \"call\" AS \"x_axis_1\", ROUND(SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (400 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (240 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (12.5 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (25 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (75 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END)) / 1000000.0 ELSE NULL END), 2) AS \"y_axis_1\", 'Uncached input' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" UNION ALL SELECT \"call\" AS \"x_axis_1\", ROUND(SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (20 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (16 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (10 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (10 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (10 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (1 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (25 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (20 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (2 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (7.5 * COALESCE(ai_cache_read_tokens, 0)) / 1000000.0 ELSE NULL END), 2) AS \"y_axis_1\", 'Cache read' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" UNION ALL SELECT \"call\" AS \"x_axis_1\", ROUND(SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (500 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (250 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (125 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (125 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (0 * COALESCE(ai_cache_write_tokens, 0)) / 1000000.0 ELSE NULL END), 2) AS \"y_axis_1\", 'Cache write' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" UNION ALL SELECT \"call\" AS \"x_axis_1\", ROUND(SUM(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (960 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (1000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (50 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (1150 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (120 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (375 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 ELSE NULL END), 2) AS \"y_axis_1\", 'Output' AS \"breakdown_1\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') GROUP BY \"call\" ORDER BY \"x_axis_1\"",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [
+                  {
+                    "label": "Call number",
+                    "alias": "x_axis_1",
+                    "column": "_timestamp",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "y": [
+                  {
+                    "label": "Credits",
+                    "alias": "y_axis_1",
+                    "column": "y_axis_1",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "z": [],
+                "breakdown": [
+                  {
+                    "label": "Token type",
+                    "alias": "breakdown_1",
+                    "column": "ai_source",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 21,
+            "w": 96,
+            "h": 30,
+            "i": 7
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "conversation-tools",
+          "type": "table",
+          "title": "Agent tool calls",
+          "description": "Agent tool calls in this conversation.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "default",
+            "decimals": 0,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT ai_tool_name AS \"tool\", COUNT(*) AS \"calls\", SUM(CASE WHEN ai_success = false THEN 1 ELSE 0 END) AS \"failed\", ROUND(AVG(ai_duration_ms) / 1000.0, 1) AS \"seconds\" FROM \"ai_normalized\" WHERE ai_event_kind = 'tool' AND ai_conversation_id = '$conversation' GROUP BY ai_tool_name ORDER BY \"calls\" DESC",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [
+                  {
+                    "label": "Agent tool",
+                    "alias": "tool",
+                    "column": "tool",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Calls",
+                    "alias": "calls",
+                    "column": "calls",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Failed",
+                    "alias": "failed",
+                    "column": "failed",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Avg seconds",
+                    "alias": "seconds",
+                    "column": "seconds",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 51,
+            "w": 64,
+            "h": 40,
+            "i": 8
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        },
+        {
+          "id": "call-list",
+          "type": "table",
+          "title": "Model calls in order",
+          "description": "Each model call in this conversation. Break is the time since the previous call; after a break of over 5 minutes the whole context is usually written to the cache again.",
+          "config": {
+            "show_legends": false,
+            "legends_position": "bottom",
+            "unit": "default",
+            "decimals": 1,
+            "base_map": null,
+            "map_view": null,
+            "drilldown": [],
+            "mark_line": [],
+            "override_config": [],
+            "mappings": [],
+            "connect_nulls": true,
+            "color": {
+              "mode": "palette-classic-by-series",
+              "fixedColor": [],
+              "seriesBy": "last",
+              "colorBySeries": [
+                {
+                  "type": "value",
+                  "value": "opencode",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot",
+                  "color": "#e8743b"
+                },
+                {
+                  "type": "value",
+                  "value": "vscode_copilot background",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "Uncached input",
+                  "color": "#ed4a7b"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache read",
+                  "color": "#19a979"
+                },
+                {
+                  "type": "value",
+                  "value": "Cache write",
+                  "color": "#e8a33b"
+                },
+                {
+                  "type": "value",
+                  "value": "Output",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Used",
+                  "color": "#5960b2"
+                },
+                {
+                  "type": "value",
+                  "value": "Budget pace",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of calls",
+                  "color": "#b0b4ba"
+                },
+                {
+                  "type": "value",
+                  "value": "% of credits",
+                  "color": "#5960b2"
+                }
+              ]
+            }
+          },
+          "queryType": "sql",
+          "queries": [
+            {
+              "query": "SELECT \"call\" AS \"call\", to_char((to_timestamp_micros(_timestamp) AT TIME ZONE 'UTC' AT TIME ZONE '$timezone'), '%d.%m. %H:%M:%S') AS \"time\", ROUND(\"pause\", 1) AS \"pause\", ai_agent AS \"agent\", ai_model AS \"model\", ((CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + COALESCE(ai_cache_read_tokens, 0) + COALESCE(ai_cache_write_tokens, 0)) AS \"context\", COALESCE(ai_cache_write_tokens, 0) AS \"cache_write\", (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END) AS \"output\", ROUND(CASE WHEN NOT (ai_provider IN ('github', 'github-copilot')) THEN NULL WHEN ai_model = 'gpt-4o-mini-2024-07-18' OR ai_agent = 'XtabProvider' THEN 0 WHEN ai_model = 'claude-opus-5.5' THEN (400 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 20 * COALESCE(ai_cache_read_tokens, 0) + 500 * COALESCE(ai_cache_write_tokens, 0) + 2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-sonnet-5.5' THEN (240 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 16 * COALESCE(ai_cache_read_tokens, 0) + 250 * COALESCE(ai_cache_write_tokens, 0) + 960 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4.5' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 125 * COALESCE(ai_cache_write_tokens, 0) + 500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'claude-haiku-4-5-20251001' THEN (100 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 125 * COALESCE(ai_cache_write_tokens, 0) + 500 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6.1-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 10 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 1000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-6-luna' THEN (12.5 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 1 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 50 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-sol' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 25 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 2000 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-terra' THEN (250 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 20 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 1150 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gpt-5.6-luna' THEN (25 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 2 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 120 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 WHEN ai_model = 'gemini-3.8-flash' THEN (75 * (CASE WHEN ai_source = 'vscode_copilot' THEN ai_input_tokens - COALESCE(ai_cache_read_tokens, 0) - COALESCE(ai_cache_write_tokens, 0) ELSE ai_input_tokens END) + 7.5 * COALESCE(ai_cache_read_tokens, 0) + 0 * COALESCE(ai_cache_write_tokens, 0) + 375 * (ai_output_tokens + CASE WHEN ai_source = 'opencode' THEN COALESCE(ai_reasoning_tokens, 0) ELSE 0 END)) / 1000000.0 ELSE NULL END, 2) AS \"credits\", ROUND(ai_duration_ms / 1000.0, 1) AS \"seconds\" FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY _timestamp) AS \"call\", (_timestamp - LAG(_timestamp) OVER (ORDER BY _timestamp)) / 60000000.0 AS \"pause\" FROM \"ai_normalized\" WHERE ai_event_kind = 'inference' AND operation_name NOT LIKE 'ai-normalization.smoke%' AND CASE WHEN ai_source = 'vscode_copilot' AND (ai_agent IN ('XtabProvider', 'progressMessages', 'title', 'intentDetection', 'healApplyPatch') OR ai_agent LIKE 'copilotLanguageModelWrapper%') THEN 'vscode_copilot background' ELSE ai_source END <> 'vscode_copilot background' AND ai_conversation_id = '$conversation') ORDER BY \"call\"",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "ai_normalized",
+                "stream_type": "traces",
+                "x": [
+                  {
+                    "label": "#",
+                    "alias": "call",
+                    "column": "call",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Time",
+                    "alias": "time",
+                    "column": "time",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Break min",
+                    "alias": "pause",
+                    "column": "pause",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Agent",
+                    "alias": "agent",
+                    "column": "agent",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Model",
+                    "alias": "model",
+                    "column": "model",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Context",
+                    "alias": "context",
+                    "column": "context",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Cache write",
+                    "alias": "cache_write",
+                    "column": "cache_write",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Output",
+                    "alias": "output",
+                    "column": "output",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Credits",
+                    "alias": "credits",
+                    "column": "credits",
+                    "color": null,
+                    "isDerived": false
+                  },
+                  {
+                    "label": "Seconds",
+                    "alias": "seconds",
+                    "column": "seconds",
+                    "color": null,
+                    "isDerived": false
+                  }
+                ],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1,
+                "limit": 0,
+                "min": 0,
+                "max": 100,
+                "time_shift": []
+              }
+            }
+          ],
+          "layout": {
+            "x": 64,
+            "y": 51,
+            "w": 128,
+            "h": 40,
+            "i": 9
+          },
+          "htmlContent": "",
+          "markdownContent": "",
+          "customChartContent": ""
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "showDynamicFilters": false,
+    "list": [
+      {
+        "type": "textbox",
+        "name": "conversation",
+        "label": "Conversation",
+        "value": ""
+      },
+      {
+        "type": "constant",
+        "name": "timezone",
+        "label": "Time zone",
+        "value": "UTC",
+        "hideOnDashboard": true
+      }
+    ]
+  },
+  "defaultDatetimeDuration": {
+    "type": "relative",
+    "relativeTimePeriod": "30d",
+    "startTime": null,
+    "endTime": null
+  }
+}

@@ -42,6 +42,33 @@ spans double counts.
 
 <br>
 
+## AI conversation
+
+One conversation, set in the `conversation` variable:
+
+- Details: AI tool, project, main model, start and last call
+- Credits, model calls, average context per call, and cache write % of credits
+- Context per call and credits per call, by token type and call number
+- Agent tool calls, and every model call in order with the break since the
+  previous call
+
+The project is the repo and branch, looked up from `vscode_copilot_raw`. It is
+known for VS Code conversations started in a repo. OpenCode telemetry has no
+readable project.
+
+<br>
+
+## Cache writes after a break
+
+Each model call sends the whole conversation again. Normally the earlier part
+is still in the prompt cache, so the call reads it cheaply and writes only the
+new messages. The cache expires after about 5 minutes without use, so the
+first call after a longer break writes the whole context again, at 25 times
+the price of reading it. The tall cache write bars in the context per call
+chart are these calls.
+
+<br>
+
 ## Background calls
 
 VS Code makes many small model calls besides chat: next edit suggestions,
