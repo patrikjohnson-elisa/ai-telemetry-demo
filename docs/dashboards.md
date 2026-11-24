@@ -15,19 +15,35 @@ Export-only fields such as `dashboardId` and `owner` are ignored on deploy.
 
 <br>
 
+## Terms
+
+The dashboards use these terms:
+
+| Term | Meaning |
+|---|---|
+| AI tool | The coding tool: `opencode`, `vscode_copilot`, or `vscode_copilot background` |
+| Agent tool | A tool the agent calls, such as `read_file` or `shell` |
+| Model call | One call to a model, an `inference` span |
+| Context | Input tokens of a model call: uncached input + cache read + cache write |
+| Cache read % of context | Share of the context read from the prompt cache |
+| Cache write % of credits | Share of the estimated credits spent writing context to the cache |
+| Break | Time since the previous model call in the same conversation |
+
+<br>
+
 ## AI tools overview
 
-Usage across tools from `ai_normalized`, in five parts:
+Usage across AI tools from `ai_normalized`, in five parts:
 
 - Budget: estimated GitHub AI credits this calendar month (UTC) against the
   `credit_budget` dashboard variable, the projected month-end total, and
   credits per day by token type
-- Activity: tokens per day by tool, and the average context per model call
-  per day. Days start at midnight in the time zone set in the `timezone`
-  variable
-- Most expensive conversations, with their average context size and the
-  share of credits spent on cache writes
-- Per tool and per model totals, and a simplistic estimate of what the same
+- Activity: tokens per day by AI tool, and the average context per call per
+  day. Days start at midnight in the time zone set in the `timezone` variable
+- Most expensive conversations, with their project, average context per call,
+  and cache write % of credits. Click a row to open it in the AI conversation
+  dashboard
+- Per AI tool and per model totals, and a simplistic estimate of what the same
   tokens would cost on a cheaper model
 - The most called agent tools
 
