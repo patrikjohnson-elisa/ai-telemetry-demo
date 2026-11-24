@@ -85,6 +85,22 @@ chart are these calls.
 
 <br>
 
+## AI efficiency
+
+Patterns across conversations, in the selected time range:
+
+- Cache read % of context, cache write % of credits, average context per
+  call, and the share of failed agent tool calls
+- Credits and context per call by conversation length. Calls are numbered
+  from the start of the time range, so conversations that started earlier
+  count from there
+- Cache read % of context and cache write % of credits per day
+- Share of model calls and of credits by context size
+- Cache write credits by break length, which shows what the breaks cost
+- Agent tool failures
+
+<br>
+
 ## Background calls
 
 VS Code makes many small model calls besides chat: next edit suggestions,
